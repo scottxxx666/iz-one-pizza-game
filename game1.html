@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Title</title>
+  <style>
+    body {
+      background-color: black;
+    }
+  </style>
 </head>
 <body>
 <script src="//cdn.jsdelivr.net/npm/phaser@3.53.1/dist/phaser.min.js"></script>
@@ -11,6 +16,10 @@
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    scale: {
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
     physics: {
       default: 'arcade',
       arcade: {
@@ -28,8 +37,12 @@
   var game = new Phaser.Game(config);
 
   function preload() {
+    // game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    // game.scale.pageAlignHorizontally = true;
+    // game.scale.pageAlignVertically = true;
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
+    this.load.image('bomb', 'assets/bomb.png');
     this.load.spritesheet('player', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
   }
 
@@ -38,23 +51,29 @@
 
   var speed = 100;
   var stars;
+  var bombs;
   var score = 0;
   var scoreText;
+  var interval;
+  let gameOverText;
 
   function create() {
+    gameOverText = this.add.text(game.config.width / 2 - 86, game.config.height / 2, 'GAME OVER', {
+      fontSize: '32px',
+      fill: '#fff',
+    });
+
+    gameOverText.visible = false;
     platforms = this.physics.add.staticGroup();
     platforms.create(0, 590, 'ground').setScale(4, 1).refreshBody();
 
     player = this.physics.add.sprite(400, 0, 'player');
     player.setCollideWorldBounds(true);
 
-    stars = this.physics.add.group({
-      key: 'star',
-      repeat: 0,
-      setXY: { x: 12, y: 0, stepX: 70 },
-    });
+    stars = this.physics.add.group();
+    bombs = this.physics.add.group();
 
-    setInterval(() => {
+    interval = setInterval(() => {
       // stars.children.iterate(function (child) {
       //   child.enableBody(true, child.x, 0, true, true);
       // });
@@ -65,10 +84,16 @@
         var s = stars.create(Math.random() * 800, 0, 'star');
         // s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
       }
+      for (let i = 0; i < 3 * Math.random(); i++) {
+        var s = bombs.create(Math.random() * 800, 0, 'bomb');
+        // s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+      }
     }, Phaser.Math.Between(1000, 3000));
 
     this.physics.add.collider(player, platforms);
+    this.physics.add.collider(stars, bombs);
     this.physics.add.collider(player, stars, eat, null, this);
+    this.physics.add.collider(player, bombs, gg, null, this);
 
     scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' });
   }
@@ -92,13 +117,18 @@
   }
 
   function eat(player, star) {
-    // this.physics.pause();
     star.disableBody(true, true);
-    score += 10;
+    score += 12;
     scoreText.setText('Score: ' + score);
+  }
 
-    // player.setTint(0xff0000);
-    // setTimeout(() => player.setTint(), 100);
+  function gg(player, bomb) {
+    clearInterval(interval);
+    this.physics.pause();
+    bomb.disableBody(true, true);
+    player.setTint(0xff0000);
+    setTimeout(() => player.setTint(), 100);
+    gameOverText.visible = true;
   }
 </script>
 </body>
