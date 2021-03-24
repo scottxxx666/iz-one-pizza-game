@@ -12,10 +12,39 @@
 <body>
 <script src="//cdn.jsdelivr.net/npm/phaser@3.53.1/dist/phaser.min.js"></script>
 <script>
+  var indexScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    create: function () {
+      this.clickButton = new Phaser.GameObjects
+        .Text(this, width / 2, height / 2, 'Start Game', { fill: '#FFF', fontSize: 32 })
+        .setOrigin(0.5);
+
+      this.add.existing(this.clickButton);
+      this.clickButton
+        .setInteractive({ useHandCursor: true })
+        .on('pointerup', () => {
+          document.body.requestFullscreen();
+          this.scene.start("gameScene");
+        });
+    },
+  });
+
+  var gameScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize: function () {
+      Phaser.Scene.call(this, { "key": "gameScene" });
+    },
+    preload: preload,
+    create: create,
+    update: update,
+  });
+
+  const width = 800;
+  const height = 600;
   var config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: width,
+    height: height,
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -27,14 +56,9 @@
         debug: false,
       },
     },
-    scene: {
-      preload: preload,
-      create: create,
-      update: update,
-    },
+    // scene: [gameScene],
+    scene: [indexScene, gameScene],
   };
-
-  var game = new Phaser.Game(config);
 
   function preload() {
     // game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -133,6 +157,8 @@
     setTimeout(() => player.setTint(), 100);
     gameOverText.visible = true;
   }
+
+  var game = new Phaser.Game(config);
 </script>
 </body>
 </html>
