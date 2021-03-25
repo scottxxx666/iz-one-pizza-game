@@ -23,7 +23,7 @@
       this.clickButton
         .setInteractive({ useHandCursor: true })
         .on('pointerup', () => {
-          document.body.requestFullscreen();
+          this.scale.startFullscreen();
           this.scene.start("gameScene");
         });
     },
@@ -61,9 +61,6 @@
   };
 
   function preload() {
-    // game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    // game.scale.pageAlignHorizontally = true;
-    // game.scale.pageAlignVertically = true;
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
@@ -80,18 +77,51 @@
   var scoreText;
   var interval;
   let gameOverText;
+  let rotateText;
+
+  var a;
+  var mql = window.matchMedia("(orientation: portrait)");
+
+  function detectOrientation() {
+    rotateText.visible = mql.matches;
+  }
 
   function create() {
-    gameOverText = this.add.text(game.config.width / 2 - 86, game.config.height / 2, 'GAME OVER', {
+    rotateText = this.add.text(game.config.width / 2, game.config.height / 2, 'Please rotate your device to landscape', {
+      fontSize: '32px',
+      fill: '#FFF',
+    }).setOrigin(0.5);
+    rotateText.visible = false;
+
+    window.addEventListener('deviceorientation', (e) => {
+      if (e.alpha < 270 && e.alpha > 90) {
+        a = Math.round(e.beta);
+      } else {
+        a = -Math.round(e.beta);
+      }
+
+      speed += a * 5;
+      speed = Math.min(speed, 500);
+      speed = Math.max(speed, -500);
+      player.setVelocityX(speed);
+    });
+
+    detectOrientation();
+
+    mql.addEventListener('change', function (m) {
+      rotateText.visible = m.matches;
+    });
+
+    gameOverText = this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', {
       fontSize: '32px',
       fill: '#fff',
-    });
+    }).setOrigin(0.5);
 
     gameOverText.visible = false;
     platforms = this.physics.add.staticGroup();
     platforms.create(0, 590, 'ground').setScale(4, 1).refreshBody();
 
-    player = this.physics.add.sprite(400, 0, 'player');
+    player = this.physics.add.sprite(400, 200, 'player');
     player.setCollideWorldBounds(true);
 
     stars = this.physics.add.group();
@@ -151,7 +181,7 @@
 
   function gg(player, bomb) {
     clearInterval(interval);
-    this.physics.pause();
+    // this.physics.pause();
     bomb.disableBody(true, true);
     player.setTint(0xff0000);
     setTimeout(() => player.setTint(), 100);
