@@ -37,6 +37,8 @@
     preload: preload,
     create: create,
     update: update,
+    detectOrientation,
+    isPortrait: false,
   });
 
   const width = 800;
@@ -64,7 +66,7 @@
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('player', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    this.load.image('player', 'assets/player120.png');
   }
 
   var platforms;
@@ -78,16 +80,23 @@
   var interval;
   let gameOverText;
   let rotateText;
+  let stage = 0;
 
   var a;
-  var mql = window.matchMedia("(orientation: portrait)");
+  var mqlPortrait = window.matchMedia("(orientation: portrait)");
 
   function detectOrientation() {
-    rotateText.visible = mql.matches;
+    this.isPortrait = mqlPortrait.matches;
+    rotateText.visible = this.isPortrait;
+    if (this.isPortrait) {
+      this.physics.pause();
+    } else {
+      this.physics.resume();
+    }
   }
 
   function create() {
-    rotateText = this.add.text(game.config.width / 2, game.config.height / 2, 'Please rotate your device to landscape', {
+    rotateText = this.add.text(game.config.width / 2, game.config.height / 2 - 80, 'Please rotate your device to landscape', {
       fontSize: '32px',
       fill: '#FFF',
     }).setOrigin(0.5);
@@ -106,22 +115,35 @@
       player.setVelocityX(speed);
     });
 
-    detectOrientation();
+    this.detectOrientation();
 
-    mql.addEventListener('change', function (m) {
-      rotateText.visible = m.matches;
-    });
 
     gameOverText = this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', {
       fontSize: '32px',
       fill: '#fff',
     }).setOrigin(0.5);
-
     gameOverText.visible = false;
+
+    this.restartButton = new Phaser.GameObjects
+      .Text(this, width / 2, height / 2 + 50, 'PLAY AGAIN', { fill: '#FFF', fontSize: 32 })
+      .setOrigin(0.5);
+
+    this.add.existing(this.restartButton);
+    this.restartButton
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => {
+        this.scale.startFullscreen();
+        this.scene.start("gameScene");
+        stage = 0;
+        score = 0;
+        speed = 0;
+      });
+    this.restartButton.visible = false;
+
     platforms = this.physics.add.staticGroup();
     platforms.create(0, 590, 'ground').setScale(4, 1).refreshBody();
 
-    player = this.physics.add.sprite(400, 200, 'player');
+    player = this.physics.add.sprite(400, 500, 'player');
     player.setCollideWorldBounds(true);
 
     stars = this.physics.add.group();
@@ -137,12 +159,17 @@
       for (let i = 0; i < 3 * Math.random(); i++) {
         var s = stars.create(Math.random() * 800, 0, 'star');
         // s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+      if (this.isPortrait) {
+        return;
       }
       for (let i = 0; i < 3 * Math.random(); i++) {
         var s = bombs.create(Math.random() * 800, 0, 'bomb');
         // s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
       }
     }, Phaser.Math.Between(1000, 3000));
+      createPizza();
+      createKimichiDumpling();
+    }, 1000);
 
     this.physics.add.collider(player, platforms);
     this.physics.add.collider(stars, bombs);
@@ -152,7 +179,49 @@
     scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' });
   }
 
+  function createPizza() {
+    if (stage <= 1) {
+      for (let i = 0; i < 3 * Math.random(); i++) {
+        var s = bombs.create(Math.random() * 800, 0, 'bomb');
+        if (stage > 0) {
+          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+        }
+      }
+    } else if (stage > 1) {
+      for (let i = 0; i < 5 * Math.random(); i++) {
+        var s = bombs.create(Math.random() * 800, 0, 'bomb');
+        if (stage <= 2) {
+          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+        } else {
+          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(100, 400));
+        }
+      }
+    }
+  }
+
+  function createKimichiDumpling() {
+    if (stage <= 1) {
+      for (let i = 0; i < 3 * Math.random(); i++) {
+        var s = stars.create(Math.random() * 800, 0, 'star');
+        if (stage > 0) {
+          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+        }
+      }
+    } else if (stage > 1) {
+      for (let i = 0; i < 6 * Math.random(); i++) {
+        var s = stars.create(Math.random() * 800, 0, 'star');
+        if (stage === 2) {
+          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+        } else {
+          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(100, 400));
+        }
+      }
+    }
+  }
+
   function update() {
+    this.detectOrientation();
+
     const cursors = this.input.keyboard.createCursorKeys();
     if (cursors.left.isDown) {
       if (speed > 0) {
@@ -171,6 +240,12 @@
       speed = Math.min(speed, 1000);
       player.setVelocityX(speed);
     }
+
+    if (48 >= score && score > 24) {
+      stage = 1;
+    } else if (72 >= score && score > 48) {
+      stage = 2;
+    }
   }
 
   function eat(player, star) {
@@ -186,6 +261,7 @@
     player.setTint(0xff0000);
     setTimeout(() => player.setTint(), 100);
     gameOverText.visible = true;
+    this.restartButton.visible = true;
   }
 
   var game = new Phaser.Game(config);
