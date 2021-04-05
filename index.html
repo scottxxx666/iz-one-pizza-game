@@ -41,6 +41,40 @@
     isPortrait: false,
   });
 
+  const endScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize: function () {
+      Phaser.Scene.call(this, { "key": "endScene" });
+    },
+    preload: function () {
+      this.load.video('endingVideo', 'assets/ending.mp4');
+    },
+    create: function () {
+      const video = this.add.video(game.config.width / 2, game.config.height / 2, 'endingVideo');
+
+      this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', {
+        fontSize: '32px',
+        fill: '#fff',
+      }).setOrigin(0.5);
+
+      this.restartButton = new Phaser.GameObjects
+        .Text(this, width / 2, height / 2 + 50, 'PLAY AGAIN', { fill: '#FFF', fontSize: 32 })
+        .setOrigin(0.5);
+      this.add.existing(this.restartButton);
+      this.restartButton
+        .setInteractive({ useHandCursor: true })
+        .on('pointerup', () => {
+          this.scale.startFullscreen();
+          this.scene.start("gameScene");
+          stage = 0;
+          score = 0;
+          speed = 0;
+        });
+
+      video.play(true);
+    },
+  });
+
   const width = 800;
   const height = 600;
   var config = {
@@ -58,8 +92,7 @@
         debug: false,
       },
     },
-    // scene: [gameScene],
-    scene: [indexScene, gameScene],
+    scene: [indexScene, gameScene, endScene],
   };
 
   function preload() {
@@ -78,7 +111,6 @@
   var score = 0;
   var scoreText;
   var interval;
-  let gameOverText;
   let rotateText;
   let stage = 0;
 
@@ -117,29 +149,6 @@
 
     this.detectOrientation();
 
-
-    gameOverText = this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', {
-      fontSize: '32px',
-      fill: '#fff',
-    }).setOrigin(0.5);
-    gameOverText.visible = false;
-
-    this.restartButton = new Phaser.GameObjects
-      .Text(this, width / 2, height / 2 + 50, 'PLAY AGAIN', { fill: '#FFF', fontSize: 32 })
-      .setOrigin(0.5);
-
-    this.add.existing(this.restartButton);
-    this.restartButton
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => {
-        this.scale.startFullscreen();
-        this.scene.start("gameScene");
-        stage = 0;
-        score = 0;
-        speed = 0;
-      });
-    this.restartButton.visible = false;
-
     platforms = this.physics.add.staticGroup();
     platforms.create(0, 590, 'ground').setScale(4, 1).refreshBody();
 
@@ -156,20 +165,14 @@
       // var bomb = stars.create(100, 160, 'bomb');
       // bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
       // bomb.allowGravity = false;
-      for (let i = 0; i < 3 * Math.random(); i++) {
-        var s = stars.create(Math.random() * 800, 0, 'star');
-        // s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
       if (this.isPortrait) {
         return;
       }
-      for (let i = 0; i < 3 * Math.random(); i++) {
-        var s = bombs.create(Math.random() * 800, 0, 'bomb');
-        // s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
-      }
-    }, Phaser.Math.Between(1000, 3000));
+
       createPizza();
       createKimichiDumpling();
     }, 1000);
+    // }, Phaser.Math.Between(1000 - Math.max(500, score), 3000 - Math.max(2000, score)));
 
     this.physics.add.collider(player, platforms);
     this.physics.add.collider(stars, bombs);
@@ -256,12 +259,10 @@
 
   function gg(player, bomb) {
     clearInterval(interval);
-    // this.physics.pause();
     bomb.disableBody(true, true);
     player.setTint(0xff0000);
     setTimeout(() => player.setTint(), 100);
-    gameOverText.visible = true;
-    this.restartButton.visible = true;
+    this.scene.start("endScene");
   }
 
   var game = new Phaser.Game(config);
