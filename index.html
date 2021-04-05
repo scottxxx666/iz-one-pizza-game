@@ -97,8 +97,8 @@
 
   function preload() {
     this.load.image('ground', 'assets/platform.png');
-    this.load.image('star', 'assets/star.png');
-    this.load.image('bomb', 'assets/bomb.png');
+    this.load.image('star', 'assets/dumplings.png');
+    this.load.image('bomb', 'assets/pizza.png');
     this.load.image('player', 'assets/player120.png');
   }
 
@@ -141,9 +141,9 @@
         a = -Math.round(e.beta);
       }
 
-      speed += a * 5;
-      speed = Math.min(speed, 500);
-      speed = Math.max(speed, -500);
+      speed += a * 2;
+      speed = Math.min(speed, 400);
+      speed = Math.max(speed, -400);
       player.setVelocityX(speed);
     });
 
@@ -183,21 +183,12 @@
   }
 
   function createPizza() {
-    if (stage <= 1) {
-      for (let i = 0; i < 3 * Math.random(); i++) {
-        var s = bombs.create(Math.random() * 800, 0, 'bomb');
-        if (stage > 0) {
-          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
-        }
-      }
-    } else if (stage > 1) {
-      for (let i = 0; i < 5 * Math.random(); i++) {
-        var s = bombs.create(Math.random() * 800, 0, 'bomb');
-        if (stage <= 2) {
-          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
-        } else {
-          s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(100, 400));
-        }
+    for (let i = 0; i < 3 * Math.random(); i++) {
+      var s = bombs.create(Math.random() * 800, 0, 'bomb');
+      if (stage <= 2) {
+        s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(10, 200));
+      } else if (stage > 4) {
+        s.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(100, 400));
       }
     }
   }
