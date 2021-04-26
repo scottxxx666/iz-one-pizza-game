@@ -115,6 +115,7 @@
   let rotateText;
   let stage = 0;
   let boss;
+  const bossStartX = -300;
 
   var a;
   var mqlPortrait = window.matchMedia("(orientation: portrait)");
@@ -154,7 +155,7 @@
     platforms = this.physics.add.staticGroup();
     platforms.create(0, 590, 'ground').setScale(4, 1).refreshBody();
 
-    boss = this.physics.add.sprite(-300, 150, 'boss1');
+    boss = this.physics.add.sprite(bossStartX, 150, 'boss1');
     boss.body.setAllowGravity(false);
 
     player = this.physics.add.sprite(400, 500, 'player');
@@ -220,6 +221,10 @@
   }
 
   function update() {
+    if (boss.x > game.config.width + 150) {
+      boss.x = bossStartX;
+    }
+
     this.detectOrientation();
 
     if (stage >= 3) {
